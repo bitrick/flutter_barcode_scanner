@@ -1,0 +1,10 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+  package="com.digitalplant.barcode_scanner">
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera" />
+    <uses-permission android:name="android.permission.FLASHLIGHT" />
+
+    <application android:theme="@style/Theme.AppCompat.NoActionBar">
+        <activity android:name="com.digitalplant.barcode_scanner.CaptureActivity" />
+    </application>
+</manifest>
