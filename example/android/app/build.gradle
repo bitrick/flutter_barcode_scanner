@@ -59,5 +59,10 @@ dependencies {
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
 
-    implementation 'com.android.support:appcompat-v7:28.0.0'
+    // implementation 'com.android.support:appcompat-v7:28.0.0'
+    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
+    implementation 'com.google.android.material:material:1.0.0'
+    compileOnly 'androidx.appcompat:appcompat:1.0.0'
+
+    implementation 'com.king.zxing:zxing-lite:1.1.3-androidx'
 }

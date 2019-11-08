@@ -1,15 +1,21 @@
 package com.digitalplant.barcode_scanner;
 
 import android.Manifest;
-import android.app.Activity;
+//import android.app.Activity;
 import android.content.pm.PackageManager;
 import android.hardware.Camera;
 import android.os.Bundle;
 import android.os.Handler;
-import android.support.annotation.LayoutRes;
-import android.support.annotation.NonNull;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+//import android.support.annotation.LayoutRes;
+import androidx.annotation.LayoutRes;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
+//import android.support.v7.widget.Toolbar;
+//import android.support.v7.app.AppCompatActivity;
+//import android.support.annotation.NonNull;
+//import androidx.appcompat.app.AppCompatActivity;
+//import androidx.appcompat.widget.Toolbar;
 import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceView;
@@ -51,6 +57,7 @@ public class CaptureActivity extends AppCompatActivity implements OnCaptureCallb
     public void onCreate(Bundle icicle) {
         super.onCreate(icicle);
         setContentView(R.layout.capture_activity);
+        Log.e("CaptureActivity", "setContentView(R.layout.capture_activity);");
 
         Toolbar toolbar = findViewById(R.id.toolbar);
         StatusBarUtils.immersiveStatusBar(this,toolbar,0.2f);
@@ -98,6 +105,7 @@ public class CaptureActivity extends AppCompatActivity implements OnCaptureCallb
      * 初始化
      */
     public void initCaptureHelper(){
+        Log.e("CaptureActivity", "initCaptureHelper");
         surfaceView = findViewById(getSurfaceViewId());
         viewfinderView = findViewById(getViewfinderViewId());
         mCaptureHelper = new CaptureHelper(this,surfaceView,viewfinderView);
@@ -116,7 +124,9 @@ public class CaptureActivity extends AppCompatActivity implements OnCaptureCallb
             mCaptureHelper.decodeFormats(formats);
         }
 
+        Log.e("CaptureActivity", "mCaptureHelper.onCreate();");
         mCaptureHelper.onCreate();
+        Log.e("CaptureActivity", "mCaptureHelper.onCreate(); DONE");
     }
 
     /**

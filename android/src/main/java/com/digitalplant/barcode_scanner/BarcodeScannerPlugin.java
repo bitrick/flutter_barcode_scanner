@@ -3,7 +3,7 @@ package com.digitalplant.barcode_scanner;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.annotation.CheckResult;
+//import androidx.annotation.CheckResult;
 import android.util.Log;
 import android.app.Application;
 import android.app.Application.ActivityLifecycleCallbacks;
