@@ -40,13 +40,15 @@ class _MyAppState extends State<MyApp> {
                 child: Text("连续扫描"),
                 onPressed: () async {
                   codes = [];
-                  var receiver = BarcodeScanner.scanMulti(formats: [BarcodeFormat.CODE_128], maxScan: 2, delay: 20);
+                  var receiver = BarcodeScanner.scanMulti(formats: [BarcodeFormat.CODE_128], maxScan: -1, delay: 100);
                   receiver.listen((result){
                     if (codes.contains(result)) {
                       return;
                     }
+                    codes.add(result);
+                  }, onDone: () {
+                    print("done");
                     setState(() {
-                      codes.add(result);
                     });
                   });
                 },

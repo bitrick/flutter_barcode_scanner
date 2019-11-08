@@ -38,6 +38,7 @@ public class BarcodeScannerPlugin implements MethodCallHandler, ActivityResultLi
     public static final int NO_CAM_PERM = 2;
 
     public static final int RC_SCAN = 1;
+    public static final int RC_SCAN_MULTI = 2;
 
     private static Result pendingResult;
     private static FlutterActivity activity;
@@ -127,7 +128,7 @@ public class BarcodeScannerPlugin implements MethodCallHandler, ActivityResultLi
                 intent.putExtra(IS_CONTINUOUS_KEY, true);
                 intent.putExtra(MAX_SCAN_KEY, maxScan);
                 intent.putExtra(DELAY_KEY, delay);
-                activity.startActivity(intent);
+                activity.startActivityForResult(intent, RC_SCAN_MULTI);
 
             } else {
                 result.notImplemented();
@@ -155,6 +156,10 @@ public class BarcodeScannerPlugin implements MethodCallHandler, ActivityResultLi
                 return true;
             } else {
                 pendingResult.success("");
+            }
+        } else if (requestCode == RC_SCAN_MULTI) {
+            if (barcodeStream != null) {
+                barcodeStream.endOfStream();
             }
         }
 
