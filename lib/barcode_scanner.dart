@@ -63,8 +63,6 @@ class BarcodeScanner {
   static const EventChannel _eventChannel =
       const EventChannel('barcode_scanner_receiver');
 
-  static Stream _onBarcodeReceiver;
-
   static Future<String> scan({List<int> formats}) async {
     Map params = <String, dynamic>{};
     if (formats != null) {
@@ -90,9 +88,6 @@ class BarcodeScanner {
     /// Invoke method to open camera
     /// and then create event channel which will return stream
     _channel.invokeMethod('scanMulti', params);
-    if (_onBarcodeReceiver == null) {
-      _onBarcodeReceiver = _eventChannel.receiveBroadcastStream();
-    }
-    return _onBarcodeReceiver;
+    return _eventChannel.receiveBroadcastStream();
   }
 }

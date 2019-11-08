@@ -134,7 +134,7 @@ public class BarcodeScannerPlugin implements MethodCallHandler, ActivityResultLi
                 result.notImplemented();
             }
         } catch (Exception e) {
-            Log.e(TAG, "onMethodCall: " + e.getLocalizedMessage());
+            Log.e(TAG, "onMethodCall: " + e.getMessage());
         }
 
     }
@@ -169,19 +169,12 @@ public class BarcodeScannerPlugin implements MethodCallHandler, ActivityResultLi
 
     @Override
     public void onListen(Object o, EventChannel.EventSink eventSink) {
-        try {
-            barcodeStream = eventSink;
-        } catch (Exception e) {
-        }
+        barcodeStream = eventSink;
     }
 
     @Override
     public void onCancel(Object o) {
-        try {
-            barcodeStream = null;
-        } catch (Exception e) {
-
-        }
+        barcodeStream = null;
     }
 
     /**
@@ -200,7 +193,7 @@ public class BarcodeScannerPlugin implements MethodCallHandler, ActivityResultLi
                 });
             }
         } catch (Exception e) {
-            Log.e(TAG, "onBarcodeScanReceiver: " + e.getLocalizedMessage());
+            Log.e(TAG, "onBarcodeScanReceiver: " + e.getMessage());
         }
     }
 }
