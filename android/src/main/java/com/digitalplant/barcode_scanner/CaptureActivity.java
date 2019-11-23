@@ -9,7 +9,6 @@ import androidx.annotation.LayoutRes;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.SurfaceView;
 import android.view.View;
@@ -163,19 +162,25 @@ public class CaptureActivity extends AppCompatActivity implements OnCaptureCallb
     @Override
     public void onResume() {
         super.onResume();
-        mCaptureHelper.onResume();
+        if (mCaptureHelper != null) {
+            mCaptureHelper.onResume();
+        }
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        mCaptureHelper.onPause();
+        if (mCaptureHelper != null) {
+            mCaptureHelper.onPause();
+        }
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-        mCaptureHelper.onDestroy();
+        if (mCaptureHelper != null) {
+            mCaptureHelper.onDestroy();
+        }
     }
 
     @Override
@@ -188,7 +193,9 @@ public class CaptureActivity extends AppCompatActivity implements OnCaptureCallb
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        mCaptureHelper.onTouchEvent(event);
+        if (mCaptureHelper != null) {
+            mCaptureHelper.onTouchEvent(event);
+        }
         return super.onTouchEvent(event);
     }
 
