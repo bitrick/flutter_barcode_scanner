@@ -104,6 +104,7 @@ public class CaptureActivity extends AppCompatActivity implements OnCaptureCallb
         mCaptureHelper
                 .playBeep(false)//播放音效
                 .vibrate(false)//震动
+                .supportAutoZoom(false)
                 .autoRestartPreviewAndDecode(false)
 //                .framingRectRatio(0.9f)//设置识别区域比例，范围建议在0.625 ~ 1.0之间。非全屏识别时才有效
 //                .framingRectVerticalOffset(0)//设置识别区域垂直方向偏移量，非全屏识别时才有效
