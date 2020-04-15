@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:barcode_scanner/barcode_scanner.dart';
+import 'package:flutter/services.dart';
 
 void main() => runApp(MyApp());
 
@@ -51,6 +52,19 @@ class _MyAppState extends State<MyApp> {
                     setState(() {
                     });
                   });
+                },
+              ),
+
+              Container(
+                padding: EdgeInsets.symmetric(horizontal: 15),
+                child: TextField(),
+              ),
+
+              RaisedButton(
+                child: Text("初始化扫码枪"),
+                onPressed: () async {
+                  var name = await BarcodeScanner.getInputDeviceName();
+                  print(name);
                 },
               ),
 

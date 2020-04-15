@@ -90,4 +90,25 @@ class BarcodeScanner {
     _channel.invokeMethod('scanMulti', params);
     return _eventChannel.receiveBroadcastStream();
   }
+
+  static Future<String> getInputDeviceName() async {
+    return _channel.invokeMethod('getInputDeviceName', {});
+  }
+
+  static Future<String> cancelGetInputDeviceName() async {
+    return _channel.invokeMethod('cancelGetInputDeviceName', {});
+  }
+
+  static Future<String> setInputDeviceName(String deviceName) async {
+    return _channel.invokeMethod('setInputDeviceName', {"device_name": deviceName});
+  }
+
+  static Stream startBarcodeListener() {
+    _channel.invokeMethod('startBarcodeListener', {});
+    return _eventChannel.receiveBroadcastStream();
+  }
+
+  static Future<String> stopBarcodeListener(String deviceName) async {
+    return _channel.invokeMethod('stopBarcodeListener', {});
+  }
 }
