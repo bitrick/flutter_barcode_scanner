@@ -1,14 +1,16 @@
 package com.digitalplant.barcode_scanner;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 //import androidx.annotation.CheckResult;
 import android.util.Log;
 import android.app.Application;
 import android.app.Application.ActivityLifecycleCallbacks;
-import android.util.SparseArray;
 import android.view.KeyEvent;
+import android.view.inputmethod.InputMethodManager;
+import android.view.View;
 
 import com.digitalplant.common.KeyboardListener;
 
@@ -30,7 +32,7 @@ import io.flutter.plugin.common.EventChannel;
 public class BarcodeScannerPlugin implements MethodCallHandler, ActivityResultListener, StreamHandler {
     private static final String CHANNEL = "barcode_scanner";
     private static final String TAG = BarcodeScannerPlugin.class.getSimpleName();
-    private static final SparseArray<KeyboardListener.Callback> callbacks = new SparseArray<>();
+    private static InputMethodManager imm;
 
     public static String deviceName = "";
     public static final String FORMATS_KEY       = "formats";
@@ -54,6 +56,9 @@ public class BarcodeScannerPlugin implements MethodCallHandler, ActivityResultLi
     private BarcodeScannerPlugin(FlutterActivity activity, final Registrar registrar) {
         BarcodeScannerPlugin.activity = activity;
         this.registrar = registrar;
+
+        View flutterView = activity.getFlutterView();
+        imm = (InputMethodManager) flutterView.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
 
         ActivityLifecycleCallbacks activityLifecycleCallbacks =
                 new ActivityLifecycleCallbacks() {
@@ -128,24 +133,8 @@ public class BarcodeScannerPlugin implements MethodCallHandler, ActivityResultLi
                 scanMulti(call, result);
                 break;
 
-            case "getInputDeviceName":
-                getInputDeviceName(call, result);
-                break;
-
-            case "cancelGetInputDeviceName":
-                cancelGetInputDeviceName(call, result);
-                break;
-
-            case "setInputDeviceName":
-                setInputDeviceName(call, result);
-                break;
-
-            case "startBarcodeListener":
-                startBarcodeListener(call, result);
-                break;
-
-            case "stopBarcodeListener":
-                stopBarcodeListener(call, result);
+            case "immRestartInput":
+                immRestartInput(call, result);
                 break;
 
             default:
@@ -251,99 +240,8 @@ public class BarcodeScannerPlugin implements MethodCallHandler, ActivityResultLi
         return true;
     }
 
-    // 支持物理扫码枪，现在没法做成通用的控件
-    // 需要在 FlutterActivity 的 intent 里面放入一个KeyboardListener，
-    // 这个 KeyboardListener 接管 FlutterActivity 的 dispatchKeyEvent。
-    private KeyboardListener kbListener;
-    private KeyboardListener getKeyboardListener() {
-        if (kbListener == null) {
-            Intent intent = activity.getIntent();
-            Bundle bundle = intent.getBundleExtra("keyboard_listener_bundle");
-            if (bundle != null) {
-                kbListener = (KeyboardListener) bundle.getBinder("keyboard_listener");
-            }
-        }
-        return kbListener;
-    }
-
-    private void addCallback(int handle, KeyboardListener.Callback cb) {
-        KeyboardListener listener = getKeyboardListener();
-        if (listener == null) {
-            return;
-        }
-
-        KeyboardListener.Callback old = callbacks.get(handle);
-        if (old != null) {
-            listener.removeCallback(old);
-        }
-
-        listener.addCallback(cb);
-        callbacks.put(handle, cb);
-    }
-
-    private void removeCallback(int handle) {
-        KeyboardListener listener = getKeyboardListener();
-        if (listener == null) {
-            return;
-        }
-
-        KeyboardListener.Callback cb = callbacks.get(handle);
-        if (cb == null) {
-            return;
-        }
-
-        listener.removeCallback(cb);
-        callbacks.remove(handle);
-    }
-
-    private static final int GET_INPUT_DEVICE_NAME_HANDLE = 1;
-    private static final int BARCODE_LISTENER_HANDLE      = 2;
-
-    private void getInputDeviceName(MethodCall call, Result result) {
-        Log.e("Device", "Listening");
-        addCallback(GET_INPUT_DEVICE_NAME_HANDLE, new KeyboardListener.Callback() {
-            @Override
-            public boolean run(KeyEvent e) {
-                Log.e("Device KeyEvent", e.toString());
-                if (e.getKeyCode() == KeyEvent.KEYCODE_ENTER && e.getAction() == KeyEvent.ACTION_DOWN) {
-                    removeCallback(GET_INPUT_DEVICE_NAME_HANDLE);
-                    Log.e("Device", e.getDevice().toString());
-                    pendingResult.success(e.getDevice().getName());
-                    pendingResult = null;
-                    return true;
-                }
-                return false;
-            }
-        });
-    }
-
-    private void cancelGetInputDeviceName(MethodCall call, Result result) {
-        removeCallback(GET_INPUT_DEVICE_NAME_HANDLE);
-        pendingResult.success("CANCELED");
-        pendingResult = null;
-    }
-
-    private void setInputDeviceName(MethodCall call, Result result) {
-        Map<String, Object> arguments = (Map <String, Object>) call.arguments;
-        deviceName = (String) arguments.get("device_name");
-
-        pendingResult.success("SUCCESS");
-        pendingResult = null;
-    }
-
-    private void startBarcodeListener(MethodCall call, Result result) {
-        addCallback(BARCODE_LISTENER_HANDLE, new BarcodeListener());
-
-        pendingResult.success("LISTENING");
-        pendingResult = null;
-    }
-
-    private void stopBarcodeListener(MethodCall call, Result result) {
-        removeCallback(BARCODE_LISTENER_HANDLE);
-
-        barcodeStream.endOfStream();
-        pendingResult.success("STOPPED");
-        pendingResult = null;
+    private void immRestartInput(MethodCall call, Result result) {
+        imm.restartInput(activity.getFlutterView());
     }
 }
 

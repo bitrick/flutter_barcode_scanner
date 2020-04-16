@@ -57,14 +57,26 @@ class _MyAppState extends State<MyApp> {
 
               Container(
                 padding: EdgeInsets.symmetric(horizontal: 15),
-                child: TextField(),
+                child: TextField(
+                  onSubmitted: (v) {
+                    Future.microtask((){
+                      BarcodeScanner.immRestartInput();
+                    });
+                  },
+                ),
               ),
 
               RaisedButton(
-                child: Text("初始化扫码枪"),
+                child: Text("监听键盘"),
                 onPressed: () async {
-                  var name = await BarcodeScanner.getInputDeviceName();
-                  print(name);
+                  RawKeyboard.instance.addListener(_onKey);
+                },
+              ),
+
+              RaisedButton(
+                child: Text("取消监听"),
+                onPressed: () async {
+                  RawKeyboard.instance.removeListener(_onKey);
                 },
               ),
 
@@ -74,5 +86,9 @@ class _MyAppState extends State<MyApp> {
         ),
       ),
     );
+  }
+
+  void _onKey(RawKeyEvent e) {
+    print(e);
   }
 }
