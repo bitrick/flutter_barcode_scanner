@@ -1,16 +1,23 @@
+import 'package:barcode_scanner_example/embedded_scanner_holder.dart';
 import 'package:flutter/material.dart';
 import 'package:barcode_scanner/barcode_scanner.dart';
+import 'package:barcode_scanner/embedded_scanner.dart';
 import 'package:flutter/services.dart';
 
 void main() => runApp(MyApp());
 
 class MyApp extends StatefulWidget {
+  MyApp() {
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  }
+
   @override
   _MyAppState createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
   List<String> codes = [];
+  EmbeddedScannerController controller;
 
   @override
   Widget build(BuildContext context) {
@@ -20,71 +27,92 @@ class _MyAppState extends State<MyApp> {
     }
 
     return MaterialApp(
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text('条码扫描'),
-        ),
-        body: Container(
-          child: Column(
-            children: <Widget>[
-              RaisedButton(
-                child: Text("单次扫描"),
-                onPressed: () async {
-                  var code = await BarcodeScanner.scan(formats: [BarcodeFormat.CODE_128]);
-                  setState(() {
-                    codes = <String>[code];
-                  });
-                },
-              ),
-
-              RaisedButton(
-                child: Text("连续扫描"),
-                onPressed: () async {
-                  codes = [];
-                  var receiver = BarcodeScanner.scanMulti(formats: [BarcodeFormat.CODE_128], maxScan: -1, delay: 100);
-                  receiver.listen((result){
-                    if (codes.contains(result)) {
-                      return;
-                    }
-                    codes.add(result);
-                  }, onDone: () {
-                    print("done");
-                    setState(() {
-                    });
-                  });
-                },
-              ),
-
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 15),
-                child: TextField(
-                  onSubmitted: (v) {
-                    Future.microtask((){
-                      BarcodeScanner.immRestartInput();
-                    });
-                  },
-                ),
-              ),
-
-              RaisedButton(
-                child: Text("监听键盘"),
-                onPressed: () async {
-                  RawKeyboard.instance.addListener(_onKey);
-                },
-              ),
-
-              RaisedButton(
-                child: Text("取消监听"),
-                onPressed: () async {
-                  RawKeyboard.instance.removeListener(_onKey);
-                },
-              ),
-
-              SizedBox(height: 16),
-            ] + codeWidgets,
+      home: EmbeddedScannerHolder(
+        child: Scaffold(
+          appBar: AppBar(
+            title: const Text('条码扫描'),
           ),
+          body: SingleChildScrollView(
+            child: Container(
+              child: Column(
+                children: <Widget>[
+                  RaisedButton(
+                    child: Text("开启View"),
+                    onPressed: () {
+                      EmbeddedScannerHolder.instance.show();
+                      EmbeddedScannerHolder.instance.onCode = (result) {
+                        setState(() {
+                          if (codes.contains(result)) {
+                            return;
+                          }
+                          codes.add(result);
+                        });
+                      };
+                    },
+                  ),
+
+                  RaisedButton(
+                    child: Text("单次扫描"),
+                    onPressed: () async {
+                      EmbeddedScannerHolder.instance.show(autoRestart: true, maxScan: 1);
+                      EmbeddedScannerHolder.instance.onCode = (result) {
+                        setState(() {
+                          codes = <String>[result];
+                        });
+                      };
+                    },
+                  ),
+
+                  RaisedButton(
+                    child: Text("连续扫描"),
+                    onPressed: () async {
+                      codes = [];
+                      var receiver = BarcodeScanner.scanMulti(formats: [BarcodeFormat.CODE_128], maxScan: -1, delay: 100);
+                      receiver.listen((result){
+                        if (codes.contains(result)) {
+                          return;
+                        }
+                        codes.add(result);
+                      }, onDone: () {
+                        print("done");
+                        setState(() {
+                        });
+                      });
+                    },
+                  ),
+
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 15),
+                    child: TextField(
+                      onSubmitted: (v) {
+                        Future.microtask((){
+                          BarcodeScanner.immRestartInput();
+                        });
+                      },
+                    ),
+                  ),
+
+                  RaisedButton(
+                    child: Text("监听键盘"),
+                    onPressed: () async {
+                      RawKeyboard.instance.addListener(_onKey);
+                    },
+                  ),
+
+                  RaisedButton(
+                    child: Text("取消监听"),
+                    onPressed: () async {
+                      RawKeyboard.instance.removeListener(_onKey);
+                    },
+                  ),
+
+                  SizedBox(height: 16),
+                ] + codeWidgets,
+              ),
+            ),
+          )
         ),
-      ),
+      )
     );
   }
 

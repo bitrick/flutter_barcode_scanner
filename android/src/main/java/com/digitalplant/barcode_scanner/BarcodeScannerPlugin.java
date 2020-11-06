@@ -12,6 +12,7 @@ import android.view.KeyEvent;
 import android.view.inputmethod.InputMethodManager;
 import android.view.View;
 
+import com.digitalplant.barcode_scanner.views.EmbeddedScannerFactory;
 import com.digitalplant.common.KeyboardListener;
 
 import java.util.Map;
@@ -111,6 +112,8 @@ public class BarcodeScannerPlugin implements MethodCallHandler, ActivityResultLi
 
         final EventChannel eventChannel = new EventChannel(registrar.messenger(), "barcode_scanner_receiver");
         eventChannel.setStreamHandler(instance);
+
+        registrar.platformViewRegistry().registerViewFactory("embedded_scanner", new EmbeddedScannerFactory(registrar));
     }
 
     @Override
