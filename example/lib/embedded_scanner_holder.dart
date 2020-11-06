@@ -1,7 +1,5 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
-import 'package:barcode_scanner/embedded_scanner.dart';
+import 'package:barcode_scanner/barcode_scanner.dart';
 
 class EmbeddedScannerHolder extends StatefulWidget {
   final Widget child;
