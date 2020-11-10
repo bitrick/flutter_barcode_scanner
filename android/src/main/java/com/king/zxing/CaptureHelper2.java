@@ -53,6 +53,7 @@ public class CaptureHelper2 implements CaptureLifecycle, CaptureTouchEvent {
     private CaptureHandler captureHandler;
     private OnCaptureListener onCaptureListener;
     private CameraManager cameraManager;
+    private BeepManager beepManager;
 
     private ViewfinderView viewfinderView;
     private SurfaceView surfaceView;
@@ -72,6 +73,7 @@ public class CaptureHelper2 implements CaptureLifecycle, CaptureTouchEvent {
      * 是否支持缩放（变焦），默认支持
      */
     private boolean isSupportZoom = true;
+    private boolean isVibrate = false;
     private float oldDistance;
 
     /**
@@ -118,6 +120,7 @@ public class CaptureHelper2 implements CaptureLifecycle, CaptureTouchEvent {
 
     @Override
     public void onCreate(){
+        beepManager = new BeepManager(activity);
         cameraManager = new CameraManager(activity);
         cameraManager.setFullScreenScan(false);
         cameraManager.setFramingRectRatio(0.9f);
@@ -153,10 +156,13 @@ public class CaptureHelper2 implements CaptureLifecycle, CaptureTouchEvent {
                 onResult(result);
             }
         };
+
+        beepManager.setVibrate(isVibrate);
     }
 
     @Override
     public void onResume(){
+        beepManager.updatePrefs();
         surfaceHolder.addCallback(callback);
         if (hasSurface) {
             initCamera(surfaceHolder);
@@ -171,6 +177,7 @@ public class CaptureHelper2 implements CaptureLifecycle, CaptureTouchEvent {
             captureHandler.quitSynchronously();
             captureHandler = null;
         }
+        beepManager.close();
         cameraManager.closeDriver();
         if (!hasSurface) {
             surfaceHolder.removeCallback(callback);
@@ -183,6 +190,7 @@ public class CaptureHelper2 implements CaptureLifecycle, CaptureTouchEvent {
             captureHandler.quitSynchronously();
             captureHandler = null;
         }
+        beepManager.close();
         cameraManager.closeDriver();
         if (!hasSurface) {
             surfaceHolder.removeCallback(callback);
@@ -385,6 +393,8 @@ public class CaptureHelper2 implements CaptureLifecycle, CaptureTouchEvent {
      * @param result 扫码结果
      */
     public void onResult(Result result){
+        beepManager.playBeepSoundAndVibrate();
+
         final String text = result.getText();
         if(onCaptureCallback!=null){
             onCaptureCallback.onResultCallback(text);
@@ -541,6 +551,18 @@ public class CaptureHelper2 implements CaptureLifecycle, CaptureTouchEvent {
      */
     public CaptureHelper2 setOnCaptureReadyCallback (OnCaptureReadyCallback callback) {
         this.onCaptureReadyCallback = callback;
+        return this;
+    }
+
+    /**
+     * 设置是否震动
+     * @return
+     */
+    public CaptureHelper2 vibrate(boolean vibrate){
+        this.isVibrate = vibrate;
+        if(beepManager!=null){
+            beepManager.setVibrate(vibrate);
+        }
         return this;
     }
 

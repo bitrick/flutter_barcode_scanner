@@ -10,6 +10,7 @@ class EmbeddedScannerController {
   VoidCallback onReady;
   VoidCallback onFinish;
   Function(bool) onToggleFlash;
+  Function(bool) onToggleVibrate;
   Function(String) onCode;
 
   MethodChannel _channel;
@@ -21,6 +22,7 @@ class EmbeddedScannerController {
     this.onFinish,
     this.onCode,
     this.onToggleFlash,
+    this.onToggleVibrate,
   }){
     _channel = MethodChannel("embedded_scanner_$viewId");
     _channel.setMethodCallHandler(_onMethodCall);
@@ -54,6 +56,12 @@ class EmbeddedScannerController {
       }
       break;
     
+    case 'EmbeddedScanner.onToggleVibrate':
+      if (onToggleVibrate != null) {
+        onToggleVibrate(methodCall.arguments);
+      }
+      break;
+
     }
   }
 
@@ -80,6 +88,10 @@ class EmbeddedScannerController {
 
   toggleFlash() async {
     return _channel.invokeMethod("EmbeddedScanner.toggleFlash");
+  }
+
+  toggleVibrate() async {
+    return _channel.invokeMethod("EmbeddedScanner.toggleVibrate");
   }
 
   readyToScan() async {

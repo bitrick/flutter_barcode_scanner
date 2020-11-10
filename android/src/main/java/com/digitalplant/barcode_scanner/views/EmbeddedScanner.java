@@ -69,6 +69,11 @@ public class EmbeddedScanner implements PlatformView, MethodCallHandler {
             result.success(scanView.hasTorch());
             break;
 
+        case "EmbeddedScanner.toggleVibrate":
+            scanView.toggleVibrate();
+            result.success(null);
+            break;
+
         default:
             result.notImplemented();
         }

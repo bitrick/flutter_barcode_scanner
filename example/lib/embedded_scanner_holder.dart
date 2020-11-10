@@ -26,6 +26,7 @@ class _EmbeddedScannerHolderState extends State<EmbeddedScannerHolder> with Sing
 
   bool _visible = false;
   bool _flashOn = false;
+  bool _vibrateOn = true;
   bool _okToScan = true;
   EmbeddedScannerController _controller;
 
@@ -45,6 +46,7 @@ class _EmbeddedScannerHolderState extends State<EmbeddedScannerHolder> with Sing
         setState(() {
           _visible = true;
           _flashOn = false;
+          _vibrateOn = true;
           _okToScan = true;
         });
       }
@@ -61,6 +63,12 @@ class _EmbeddedScannerHolderState extends State<EmbeddedScannerHolder> with Sing
   _onToggleFlash(bool on) {
     setState(() {
       _flashOn = on;
+    });
+  }
+
+  _onToggleVibrate(bool on) {
+    setState(() {
+      _vibrateOn = on;
     });
   }
 
@@ -163,6 +171,7 @@ class _EmbeddedScannerHolderState extends State<EmbeddedScannerHolder> with Sing
                       controller.onCode = _onResult;
                       controller.onFinish = hide;
                       controller.onToggleFlash = _onToggleFlash;
+                      controller.onToggleVibrate = _onToggleVibrate;
                     });
 
                     _setScanParams();
@@ -175,7 +184,7 @@ class _EmbeddedScannerHolderState extends State<EmbeddedScannerHolder> with Sing
             _visible && _okToScan ?
             Positioned(
               top: 35,
-              right: 10,
+              right: 15,
               child: Container(
                 width: 36,
                 height: 36,
@@ -198,7 +207,7 @@ class _EmbeddedScannerHolderState extends State<EmbeddedScannerHolder> with Sing
                   width: 46,
                   height: 46,
                   decoration: BoxDecoration(
-                    color: Color(0xFF383838),
+                    color: Color(0x3F383838),
                     borderRadius: BorderRadius.all(Radius.circular(23)),
                   ),
                   child: Icon(Icons.close, color: Colors.white, size: 25),
@@ -217,7 +226,7 @@ class _EmbeddedScannerHolderState extends State<EmbeddedScannerHolder> with Sing
                   width: 46,
                   height: 46,
                   decoration: BoxDecoration(
-                    color: Color(0xFF383838),
+                    color: Color(0x3F383838),
                     borderRadius: BorderRadius.all(Radius.circular(23)),
                   ),
                   child: Icon(_flashOn ? Icons.flash_on : Icons.flash_off, color: Colors.white, size: 25),
@@ -225,6 +234,24 @@ class _EmbeddedScannerHolderState extends State<EmbeddedScannerHolder> with Sing
               ),
             ) : Container(),
 
+            // vibrate button
+            _visible ?
+            Positioned(
+              right: 10,
+              bottom: 10,
+              child: GestureDetector(
+                onTap: _controller?.toggleVibrate,
+                child: Container(
+                  width: 46,
+                  height: 46,
+                  decoration: BoxDecoration(
+                    color: Color(0x3F383838),
+                    borderRadius: BorderRadius.all(Radius.circular(23)),
+                  ),
+                  child: Icon(_vibrateOn ? Icons.vibration : Icons.video_call, color: Colors.white, size: 25),
+                ),
+              ),
+            ) : Container(),
           ],
         ),
 

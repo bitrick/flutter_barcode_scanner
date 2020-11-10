@@ -13,6 +13,7 @@ import android.view.View;
 
 import com.digitalplant.barcode_scanner.R;
 import com.google.zxing.BarcodeFormat;
+import com.king.zxing.CaptureHelper;
 import com.king.zxing.CaptureHelper2;
 import com.king.zxing.OnCaptureFinishCallback;
 import com.king.zxing.OnCaptureReadyCallback;
@@ -39,6 +40,7 @@ public class EmbeddedScanView extends ConstraintLayout implements OnCaptureCallb
     private Activity activity;
     private MethodChannel channel;
     private boolean flashOn = false;
+    private boolean vibrateOn = true;
     private boolean okToStart = false;
     private int viewId;
 
@@ -135,11 +137,14 @@ public class EmbeddedScanView extends ConstraintLayout implements OnCaptureCallb
         viewFinderView = findViewById(getViewfinderViewId());
         // 没啥用的东西，但是库不能传NULL，只能隐藏掉了
         viewFinderView.setVisibility(View.GONE);
+        // 初始化CaptureHelper
         mCaptureHelper = new CaptureHelper2(activity, surfaceView, viewFinderView);
-        mCaptureHelper.setOnCaptureCallback(this);
-        mCaptureHelper.setOnCaptureFinishCallback(this);
-        mCaptureHelper.setOnCaptureReadyCallback(this);
-        mCaptureHelper.supportAutoZoom(false);
+        mCaptureHelper
+                .setOnCaptureCallback(this)
+                .setOnCaptureFinishCallback(this)
+                .setOnCaptureReadyCallback(this)
+                .supportAutoZoom(false)
+                .vibrate(vibrateOn);
     }
 
     /**
@@ -184,6 +189,16 @@ public class EmbeddedScanView extends ConstraintLayout implements OnCaptureCallb
     }
 
     /**
+     * 打开震动
+     */
+    public void toggleVibrate() {
+        vibrateOn = !vibrateOn;
+        setVibrate(vibrateOn);
+
+        channel.invokeMethod("EmbeddedScanner.onToggleVibrate", vibrateOn);
+    }
+
+    /**
      * {@link ViewfinderView} 的 id
      * @return
      */
@@ -225,6 +240,10 @@ public class EmbeddedScanView extends ConstraintLayout implements OnCaptureCallb
         Camera.Parameters parameters = camera.getParameters();
         CameraConfigurationUtils.setTorch(parameters,on);
         camera.setParameters(parameters);
+    }
+
+    public void setVibrate(boolean vibrate) {
+        mCaptureHelper.vibrate(vibrate);
     }
 
     /**
