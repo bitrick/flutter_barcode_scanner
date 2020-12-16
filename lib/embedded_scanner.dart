@@ -65,7 +65,7 @@ class EmbeddedScannerController {
     }
   }
 
-  setScanParams({bool autoRestart=false, int maxScan, int delay) async {
+  setScanParams({bool autoRestart=false, int maxScan, int delay}) async {
     Map<String, dynamic> params = {};
     if (autoRestart != null) {
       params["autoRestart"] = autoRestart;
