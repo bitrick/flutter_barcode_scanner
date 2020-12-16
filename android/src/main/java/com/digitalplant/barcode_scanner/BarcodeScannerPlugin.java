@@ -155,7 +155,7 @@ public class BarcodeScannerPlugin implements MethodCallHandler, ActivityResultLi
         if (resultCode == DefinedActivity.RESULT_OK) {
             pendingResult.success(data.getStringExtra(DefinedActivity.SCAN_RESULT));
         } else {
-            pendingResult.success(null);
+            pendingResult.success("");
         }
 
         pendingResult = null;
