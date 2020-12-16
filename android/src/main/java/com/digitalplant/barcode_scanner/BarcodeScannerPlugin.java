@@ -144,7 +144,11 @@ public class BarcodeScannerPlugin implements MethodCallHandler, ActivityResultLi
 
     private void scan(MethodCall call, Result result) {
         Map<String, Object> arguments = (Map <String, Object>) call.arguments;
-        ArrayList<Integer> formats = (ArrayList<Integer>) arguments.get("formats");
+        ArrayList<Integer> fs = (ArrayList<Integer>) arguments.get("formats");
+        ArrayList<Integer> formats = new ArrayList<>();
+        for (int f : fs) {
+            formats.add(BarcodeFormats[f]);
+        }
 
         Intent intent = new Intent(activity, DefinedActivity.class);
         intent.putIntegerArrayListExtra(FORMATS_KEY, formats);
