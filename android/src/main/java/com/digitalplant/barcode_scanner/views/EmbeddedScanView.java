@@ -1,9 +1,11 @@
 package com.digitalplant.barcode_scanner.views;
 
 import android.app.Activity;
+import android.app.Service;
 import android.content.Context;
 import android.content.pm.PackageManager;
 import android.graphics.Rect;
+import android.os.Vibrator;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.util.DisplayMetrics;
@@ -39,6 +41,7 @@ public class EmbeddedScanView extends ConstraintLayout implements OnResultCallba
     private Activity activity;
     private RemoteView remoteView;
     private FrameLayout frameLayout;
+    private Vibrator vibrator;
     private MethodChannel channel;
     private boolean flashOn = false;
     private boolean vibrateOn = true;
@@ -81,6 +84,8 @@ public class EmbeddedScanView extends ConstraintLayout implements OnResultCallba
         LayoutInflater.from(context).inflate(R.layout.embedded_scan_view, this, true);
         activity = getActivity(context);
         jobManager = new JobManager(activity);
+
+        vibrator = (Vibrator) activity.getApplication().getSystemService(Service.VIBRATOR_SERVICE);
     }
 
     public void setViewId(int viewId) {
@@ -149,6 +154,8 @@ public class EmbeddedScanView extends ConstraintLayout implements OnResultCallba
             remoteView.onStop();
             remoteView.onDestroy();
         }
+
+        vibrator.cancel();
     }
 
     /**
@@ -202,6 +209,10 @@ public class EmbeddedScanView extends ConstraintLayout implements OnResultCallba
         }
 
         channel.invokeMethod("EmbeddedScanner.onCode", result[0].getOriginalValue());
+        if (vibrateOn && vibrator.hasVibrator()) {
+            vibrator.vibrate(80);
+        }
+
         remoteView.pauseContinuouslyScan();
         if (autoStart) {
             if(--maxScan != 0 ){
@@ -251,8 +262,6 @@ public class EmbeddedScanView extends ConstraintLayout implements OnResultCallba
      */
     public void toggleVibrate() {
         vibrateOn = !vibrateOn;
-//        setVibrate(vibrateOn);
-
         channel.invokeMethod("EmbeddedScanner.onToggleVibrate", vibrateOn);
     }
 

@@ -2,7 +2,9 @@
   package="com.digitalplant.barcode_scanner">
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" />
+    <uses-feature android:name="android.hardware.camera.autofocus" />
     <uses-permission android:name="android.permission.FLASHLIGHT" />
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <application>
         <activity android:name="com.digitalplant.barcode_scanner.DefinedActivity" android:screenOrientation="portrait"/>
