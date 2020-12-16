@@ -132,7 +132,6 @@ class _EmbeddedScannerHolderState extends State<EmbeddedScannerHolder> with Sing
       delay: _delay,
       maxScan: _maxScan,
       autoRestart: _autoRestart,
-      formats: _formats,
     );
   }
 

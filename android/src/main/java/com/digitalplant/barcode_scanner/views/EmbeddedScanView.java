@@ -179,7 +179,7 @@ public class EmbeddedScanView extends ConstraintLayout implements OnResultCallba
 
             scanTypes = new int[formats.size()-1];
             for (int i=1; i<formats.size(); ++i) {
-                scanTypes[i] = formats.get(i).intValue();
+                scanTypes[i-1] = formats.get(i).intValue();
             }
         }
 
@@ -282,11 +282,11 @@ public class EmbeddedScanView extends ConstraintLayout implements OnResultCallba
         Log.d(TAG, "setScanParams: "+params.toString());
         if (params.containsKey("formats")) {
             ArrayList<Integer> fs = (ArrayList<Integer>) params.get("formats");
-            ArrayList<Integer> formats = new ArrayList<>();
+            ArrayList<Integer> _formats = new ArrayList<>();
             for (int f : fs) {
-                formats.add(BarcodeScannerPlugin.BarcodeFormats[f]);
+                _formats.add(BarcodeScannerPlugin.BarcodeFormats[f]);
             }
-            setFormats(formats);
+            setFormats(_formats);
         }
 
         if (params.containsKey("maxScan")) {

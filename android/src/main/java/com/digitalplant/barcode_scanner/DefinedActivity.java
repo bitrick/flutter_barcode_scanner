@@ -92,7 +92,7 @@ public class DefinedActivity extends Activity {
 
             scanTypes = new int[formats.size()-1];
             for (int i=1; i<formats.size(); ++i) {
-                scanTypes[i] = formats.get(i).intValue();
+                scanTypes[i-1] = formats.get(i).intValue();
             }
         }
 
