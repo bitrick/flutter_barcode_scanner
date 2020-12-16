@@ -37,9 +37,9 @@ class _MyAppState extends State<MyApp> {
               child: Column(
                 children: <Widget>[
                   RaisedButton(
-                    child: Text("开启View"),
+                    child: Text("连续扫描"),
                     onPressed: () {
-                      EmbeddedScannerHolder.instance.show();
+                      EmbeddedScannerHolder.instance.show(formats: [BarcodeFormat.QR_CODE]);
                       EmbeddedScannerHolder.instance.onCode = (result) {
                         setState(() {
                           if (codes.contains(result)) {
@@ -54,7 +54,7 @@ class _MyAppState extends State<MyApp> {
                   RaisedButton(
                     child: Text("单次扫描"),
                     onPressed: () async {
-                      EmbeddedScannerHolder.instance.show(autoRestart: true, maxScan: 1);
+                      EmbeddedScannerHolder.instance.show(autoRestart: true, maxScan: 2);
                       EmbeddedScannerHolder.instance.onCode = (result) {
                         setState(() {
                           codes = <String>[result];
@@ -64,20 +64,14 @@ class _MyAppState extends State<MyApp> {
                   ),
 
                   RaisedButton(
-                    child: Text("连续扫描"),
+                    child: Text("全屏扫描"),
                     onPressed: () async {
-                      codes = [];
-                      var receiver = BarcodeScanner.scanMulti(formats: [BarcodeFormat.CODE_128], maxScan: -1, delay: 100);
-                      receiver.listen((result){
-                        if (codes.contains(result)) {
-                          return;
-                        }
-                        codes.add(result);
-                      }, onDone: () {
-                        print("done");
+                      var code = await BarcodeScanner.scan();
+                      if (code != null) {
                         setState(() {
+                          codes = <String>[code];
                         });
-                      });
+                      }
                     },
                   ),
 

@@ -21,7 +21,7 @@ public class EmbeddedScanner implements PlatformView, MethodCallHandler {
     private Registrar registrar;
     private MethodChannel channel;
 
-    EmbeddedScanner(Context context, Registrar registrar, int id) {
+    EmbeddedScanner(Context context, Registrar registrar, int id, Object o) {
         this.context = context;
         this.registrar = registrar;
 
@@ -31,6 +31,10 @@ public class EmbeddedScanner implements PlatformView, MethodCallHandler {
         scanView = getScanView(registrar);
         scanView.setMethodChannel(channel);
         scanView.setViewId(id);
+
+        if (o != null) {
+            scanView.setScanParams((Map<String, Object>) o);
+        }
     }
 
     @Override

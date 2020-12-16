@@ -101,10 +101,18 @@ class EmbeddedScannerController {
 
 class EmbeddedScanner extends StatefulWidget {
   final Function(EmbeddedScannerController controller) onCreated;
+  final List<int> formats;
+  final int delay;
+  final int maxScan;
+  final bool autoRestart;
 
   EmbeddedScanner({
     @required
     this.onCreated,
+    this.formats,
+    this.delay,
+    this.maxScan,
+    this.autoRestart,
   });
 
   @override
@@ -116,10 +124,25 @@ class EmbeddedScanner extends StatefulWidget {
 class _EmbededScannerState extends State<EmbeddedScanner> {
   @override
   Widget build(BuildContext context) {
+    Map<String, dynamic> params = {};
+    if (widget.autoRestart != null) {
+      params["autoRestart"] = widget.autoRestart;
+    }
+    if (widget.maxScan != null) {
+      params["maxScan"] = widget.maxScan;
+    }
+    if (widget.delay != null) {
+      params["delay"] = widget.delay;
+    }
+    if (widget.formats != null) {
+      params["formats"] = widget.formats;
+    }
+
     return AndroidView(
       viewType: "embedded_scanner",
       onPlatformViewCreated: onPlatformViewCreated,
       creationParamsCodec: const StandardMessageCodec(),
+      creationParams: params,
     );
   }
 

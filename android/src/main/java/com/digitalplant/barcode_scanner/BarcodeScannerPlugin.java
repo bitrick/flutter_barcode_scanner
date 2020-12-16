@@ -14,6 +14,7 @@ import android.view.View;
 
 import com.digitalplant.barcode_scanner.views.EmbeddedScannerFactory;
 import com.digitalplant.common.KeyboardListener;
+import com.huawei.hms.ml.scan.HmsScan;
 
 import java.util.Map;
 import java.util.ArrayList;
@@ -25,34 +26,37 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
 import io.flutter.plugin.common.PluginRegistry.Registrar;
 import io.flutter.plugin.common.PluginRegistry.ActivityResultListener;
-import io.flutter.plugin.common.EventChannel.StreamHandler;
-import io.flutter.plugin.common.EventChannel;
 
 
 /** BarcodeScannerPlugin */
-public class BarcodeScannerPlugin implements MethodCallHandler, ActivityResultListener, StreamHandler {
+public class BarcodeScannerPlugin implements MethodCallHandler, ActivityResultListener {
     private static final String CHANNEL = "barcode_scanner";
     private static final String TAG = BarcodeScannerPlugin.class.getSimpleName();
     private static InputMethodManager imm;
 
     public static String deviceName = "";
     public static final String FORMATS_KEY       = "formats";
-    public static final String IS_CONTINUOUS_KEY = "multi";
-    public static final String MAX_SCAN_KEY      = "max_scan";
-    public static final String DELAY_KEY         = "delay";
-
-    public static final int RC_CAMERA = 0X01;
-
-    public static final int SUCCESS = 1;
-    public static final int NO_CAM_PERM = 2;
-
     public static final int RC_SCAN = 1;
-    public static final int RC_SCAN_MULTI = 2;
 
     private static Result pendingResult;
     private static FlutterActivity activity;
     private final Registrar registrar;
-    private static EventChannel.EventSink barcodeStream;
+
+    public static int[] BarcodeFormats = {
+            HmsScan.AZTEC_SCAN_TYPE,
+            HmsScan.CODABAR_SCAN_TYPE,
+            HmsScan.CODE39_SCAN_TYPE,
+            HmsScan.CODE93_SCAN_TYPE,
+            HmsScan.CODE128_SCAN_TYPE,
+            HmsScan.DATAMATRIX_SCAN_TYPE,
+            HmsScan.EAN8_SCAN_TYPE,
+            HmsScan.EAN13_SCAN_TYPE,
+            HmsScan.ITF14_SCAN_TYPE,
+            HmsScan.PDF417_SCAN_TYPE,
+            HmsScan.QRCODE_SCAN_TYPE,
+            HmsScan.UPCCODE_A_SCAN_TYPE,
+            HmsScan.UPCCODE_E_SCAN_TYPE,
+    };
 
     private BarcodeScannerPlugin(FlutterActivity activity, final Registrar registrar) {
         BarcodeScannerPlugin.activity = activity;
@@ -61,37 +65,28 @@ public class BarcodeScannerPlugin implements MethodCallHandler, ActivityResultLi
         View flutterView = activity.getFlutterView();
         imm = (InputMethodManager) flutterView.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
 
-        ActivityLifecycleCallbacks activityLifecycleCallbacks =
-                new ActivityLifecycleCallbacks() {
-                    @Override
-                    public void onActivityCreated(Activity activity, Bundle savedInstanceState) {}
+        ActivityLifecycleCallbacks activityLifecycleCallbacks = new ActivityLifecycleCallbacks() {
+            @Override
+            public void onActivityCreated(Activity activity, Bundle savedInstanceState) {}
+            @Override
+            public void onActivityStarted(Activity activity) {}
+            @Override
+            public void onActivityResumed(Activity activity) {}
+            @Override
+            public void onActivityPaused(Activity activity) {}
+            @Override
+            public void onActivitySaveInstanceState(Activity activity, Bundle outState) {}
 
-                    @Override
-                    public void onActivityStarted(Activity activity) {}
+            @Override
+            public void onActivityDestroyed(Activity activity) {
+                if (activity == registrar.activity()) {
+                    ((Application) registrar.context()).unregisterActivityLifecycleCallbacks(this);
+                }
+            }
 
-                    @Override
-                    public void onActivityResumed(Activity activity) {}
-
-                    @Override
-                    public void onActivityPaused(Activity activity) {}
-
-                    @Override
-                    public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
-                        if (activity == registrar.activity()) {
-                            // TODO
-                        }
-                    }
-
-                    @Override
-                    public void onActivityDestroyed(Activity activity) {
-                        if (activity == registrar.activity()) {
-                            ((Application) registrar.context()).unregisterActivityLifecycleCallbacks(this);
-                        }
-                    }
-
-                    @Override
-                    public void onActivityStopped(Activity activity) {}
-                };
+            @Override
+            public void onActivityStopped(Activity activity) {}
+        };
 
         if (this.registrar != null) {
             ((Application) this.registrar.context())
@@ -109,9 +104,6 @@ public class BarcodeScannerPlugin implements MethodCallHandler, ActivityResultLi
         BarcodeScannerPlugin instance = new BarcodeScannerPlugin((FlutterActivity) registrar.activity(), registrar);
         registrar.addActivityResultListener(instance);
         channel.setMethodCallHandler(instance);
-
-        final EventChannel eventChannel = new EventChannel(registrar.messenger(), "barcode_scanner_receiver");
-        eventChannel.setStreamHandler(instance);
 
         registrar.platformViewRegistry().registerViewFactory("embedded_scanner", new EmbeddedScannerFactory(registrar));
     }
@@ -132,10 +124,6 @@ public class BarcodeScannerPlugin implements MethodCallHandler, ActivityResultLi
                 scan(call, result);
                 break;
 
-            case "scanMulti":
-                scanMulti(call, result);
-                break;
-
             case "immRestartInput":
                 immRestartInput(call, result);
                 break;
@@ -151,95 +139,26 @@ public class BarcodeScannerPlugin implements MethodCallHandler, ActivityResultLi
 
     @Override
     public boolean onActivityResult(int requestCode, int resultCode, Intent data) {
-        switch (requestCode) {
-        case RC_SCAN:
-            return scanResult(requestCode, resultCode, data);
-
-        case RC_SCAN_MULTI:
-            return scanMultiResult(requestCode, resultCode, data);
-
-        }
-        return false;
-    }
-
-
-    @Override
-    public void onListen(Object o, EventChannel.EventSink eventSink) {
-        barcodeStream = eventSink;
-    }
-
-    @Override
-    public void onCancel(Object o) {
-        barcodeStream = null;
-    }
-
-    /**
-     * Continuous receive barcode
-     *
-     * @param barcode
-     */
-    public static void onBarcodeScanReceiver(final String barcode) {
-        try {
-            if (barcode != null && !barcode.isEmpty()) {
-                activity.runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                    barcodeStream.success(barcode);
-                    }
-                });
-            }
-        } catch (Exception e) {
-            Log.e(TAG, "onBarcodeScanReceiver: " + e.getMessage());
-        }
+        return scanResult(resultCode, data);
     }
 
     private void scan(MethodCall call, Result result) {
         Map<String, Object> arguments = (Map <String, Object>) call.arguments;
         ArrayList<Integer> formats = (ArrayList<Integer>) arguments.get("formats");
 
-        Intent intent = new Intent(activity, CaptureActivity.class);
+        Intent intent = new Intent(activity, DefinedActivity.class);
         intent.putIntegerArrayListExtra(FORMATS_KEY, formats);
         activity.startActivityForResult(intent, RC_SCAN);
     }
 
-    private boolean scanResult(int requestCode, int resultCode, Intent data) {
-        if (resultCode == SUCCESS) {
-            if (data != null) {
-                try {
-                    pendingResult.success(data.getStringExtra(CaptureActivity.BarcodeObject));
-                } catch (Exception e) {
-                    pendingResult.success("");
-                }
-            } else {
-                pendingResult.success("");
-            }
+    private boolean scanResult(int resultCode, Intent data) {
+        if (resultCode == DefinedActivity.RESULT_OK) {
+            pendingResult.success(data.getStringExtra(DefinedActivity.SCAN_RESULT));
         } else {
-            pendingResult.success("");
+            pendingResult.success(null);
         }
 
         pendingResult = null;
-        return true;
-    }
-
-    private void scanMulti(MethodCall call, Result result) {
-        Map<String, Object> arguments = (Map <String, Object>) call.arguments;
-        ArrayList<Integer> formats = (ArrayList<Integer>) arguments.get("formats");
-
-        int maxScan = (int) arguments.get("maxscan");
-        int delay = (int) arguments.get("delay");
-
-        Intent intent = new Intent(activity, CaptureActivity.class);
-        intent.putIntegerArrayListExtra(FORMATS_KEY, formats);
-        intent.putExtra(IS_CONTINUOUS_KEY, true);
-        intent.putExtra(MAX_SCAN_KEY, maxScan);
-        intent.putExtra(DELAY_KEY, delay);
-        activity.startActivityForResult(intent, RC_SCAN_MULTI);
-    }
-
-    private boolean scanMultiResult(int requestCode, int resultCode, Intent data) {
-        if (barcodeStream != null) {
-            barcodeStream.endOfStream();
-        }
         return true;
     }
 
@@ -275,7 +194,6 @@ class BarcodeListener implements KeyboardListener.Callback {
 
         case KeyEvent.KEYCODE_ENTER:
             if (e.getAction() == KeyEvent.ACTION_DOWN) {
-                BarcodeScannerPlugin.onBarcodeScanReceiver(result.toString());
                 result.delete(0, result.length());
             }
             break;

@@ -16,9 +16,9 @@
     <string name="barcode_width">Barcode width:</string>
     <string name="barcode_height">Barcode height:</string>
     <string name="barcode_type">Type:</string>
+    <string name="barcode_margin">Margin:</string>
     <string name="barcode_color">Color:</string>
     <string name="barcode_backgroundcolor">Background:</string>
-    <string name="barcode_margin">Margin:</string>
     <string name="width_value">700</string>
     <string name="height_value">700</string>
     <string name="generate_barcode">Generate Barcode</string>
@@ -43,5 +43,4 @@
     <string name="mwc_title">HMS Core Scan Kit Demo</string>
     <string name="mwc_subject">About Scan Kit</string>
     <string name="mwc_detail">An in-app scanner for 1D and 2D barcodes connects your app to real-world scenarios and helps you build powerful code scanning capabilities with a minimum of 5 lines of code.</string>
-    <string name="scan_showresult">Scan results will show on screen</string>
-</resources>
+    <string name="scan_showresult">Scan results will show on screen</string></resources>

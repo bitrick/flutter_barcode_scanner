@@ -5,10 +5,12 @@ buildscript {
     repositories {
         google()
         jcenter()
+        maven {url 'https://developer.huawei.com/repo/'}
     }
 
     dependencies {
         classpath 'com.android.tools.build:gradle:3.2.1'
+        classpath 'com.huawei.agconnect:agcp:1.2.1.301'
     }
 }
 
@@ -16,6 +18,7 @@ rootProject.allprojects {
     repositories {
         google()
         jcenter()
+        maven {url 'https://developer.huawei.com/repo/'}
     }
 }
 
@@ -25,9 +28,10 @@ android {
     compileSdkVersion 28
 
     defaultConfig {
-        minSdkVersion 16
+        minSdkVersion 19
         targetSdkVersion 28
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        resConfigs "en-rGB", "zh-rCN", "需要支持的其他语言"
     }
     lintOptions {
         disable 'InvalidPackage'
@@ -36,18 +40,8 @@ android {
 
 
 dependencies {
-//    implementation 'com.android.support:appcompat-v7:28.0.0'
-//    implementation 'com.android.support.constraint:constraint-layout:1.1.3'
-//    implementation 'com.android.support:design:28.0.0'
-
-    implementation 'pub.devrel:easypermissions:2.0.1'
+    implementation 'com.huawei.hms:scanplus:1.2.3.300'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
     implementation 'com.google.android.material:material:1.0.0'
     compileOnly 'androidx.appcompat:appcompat:1.0.0'
-
-    implementation 'com.king.zxing:zxing-lite:1.1.3-androidx'
-    api 'com.google.zxing:core:3.3.3'
-
-//    implementation 'com.king.zxing:zxing-lite:1.1.3'
-//    compileOnly 'com.android.support:appcompat-v7:28.0.0'
 }

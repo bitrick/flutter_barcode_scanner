@@ -10,28 +10,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <SurfaceView
-            android:id="@+id/camera_view"
-            android:layout_gravity="center"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-
     </FrameLayout>
-
-
-    <com.king.zxing.ViewfinderView
-        android:id="@+id/view_finder_view"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:cornerColor="@color/colorPrimary"
-        app:frameColor="@color/colorPrimary"
-        app:labelText="@string/tips_scan_code"
-        app:labelTextLocation="bottom"
-        app:labelTextSize="@dimen/size_14sp"
-        app:laserColor="@color/colorAccent"
-        app:laserStyle="line"
-        app:resultPointColor="@color/colorAccent"
-        tools:layout_editor_absoluteX="0dp"
-        tools:layout_editor_absoluteY="0dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -33,8 +33,8 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId "com.digitalplant.barcode_scanner_example"
-        minSdkVersion 16
+        applicationId "com.example.scankitdemo"
+        minSdkVersion 19
         targetSdkVersion 28
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName

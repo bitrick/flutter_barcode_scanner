@@ -19,6 +19,6 @@ public class EmbeddedScannerFactory extends PlatformViewFactory {
 
     @Override
     public PlatformView create(Context context, int i, Object o) {
-        return new EmbeddedScanner(context, mPluginRegistrar, i);
+        return new EmbeddedScanner(context, mPluginRegistrar, i, o);
     }
 }

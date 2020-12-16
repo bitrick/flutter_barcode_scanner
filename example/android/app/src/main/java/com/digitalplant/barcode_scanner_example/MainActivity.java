@@ -4,6 +4,7 @@ import android.view.KeyEvent;
 
 import android.os.Bundle;
 import android.content.Intent;
+import android.util.Log;
 
 import io.flutter.app.FlutterActivity;
 import io.flutter.plugins.GeneratedPluginRegistrant;

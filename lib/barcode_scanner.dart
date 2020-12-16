@@ -32,27 +32,15 @@ class BarcodeFormat {
   /// ITF (Interleaved Two of Five) 1D format.
   static const int ITF = 8;
 
-  /// MaxiCode 2D barcode format.
-  static const int MAXICODE = 9;
-
   /// PDF417 format.
-  static const int PDF_417 = 10;
+  static const int PDF_417 = 9;
 
   /// QR Code 2D barcode format.
-  static const int QR_CODE = 11;
-
-  /// RSS 14.
-  static const int RSS_14 = 12;
-
-  /// RSS EXPANDED.
-  static const int RSS_EXPANDED = 13;
+  static const int QR_CODE = 10;
 
   /// UPC-A 1D format.
-  static const int UPC_A = 14;
+  static const int UPC_A = 11;
 
   /// UPC-E 1D format.
-  static const int UPC_E = 15;
-
-  /// UPC/EAN extension format. Not a stand-alone format.
-  static const int UPC_EAN_EXTENSION = 16;
+  static const int UPC_E = 12;
 }

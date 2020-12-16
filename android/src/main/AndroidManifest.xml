@@ -4,7 +4,7 @@
     <uses-feature android:name="android.hardware.camera" />
     <uses-permission android:name="android.permission.FLASHLIGHT" />
 
-    <application android:theme="@style/Theme.AppCompat.NoActionBar">
-        <activity android:name="com.digitalplant.barcode_scanner.CaptureActivity" />
+    <application>
+        <activity android:name="com.digitalplant.barcode_scanner.DefinedActivity" android:screenOrientation="portrait"/>
     </application>
 </manifest>

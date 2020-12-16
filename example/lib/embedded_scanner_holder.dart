@@ -118,7 +118,6 @@ class _EmbeddedScannerHolderState extends State<EmbeddedScannerHolder> with Sing
       _animtionController.reverse();
     });
 
-
     onCode = null;
     onFinish = null;
     _viewState = null;
@@ -164,6 +163,11 @@ class _EmbeddedScannerHolderState extends State<EmbeddedScannerHolder> with Sing
                 width: screenSize.width,
                 height: 200,
                 child: EmbeddedScanner(
+                  delay: _delay,
+                  maxScan: _maxScan,
+                  autoRestart: _autoRestart,
+                  formats: _formats,
+
                   onCreated: (controller) async {
                     this._controller = controller;
                     setState(() {
@@ -173,8 +177,6 @@ class _EmbeddedScannerHolderState extends State<EmbeddedScannerHolder> with Sing
                       controller.onToggleFlash = _onToggleFlash;
                       controller.onToggleVibrate = _onToggleVibrate;
                     });
-
-                    _setScanParams();
                   },
                 )
               ),
