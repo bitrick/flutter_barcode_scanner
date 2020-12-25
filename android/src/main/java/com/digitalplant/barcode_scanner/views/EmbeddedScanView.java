@@ -4,42 +4,48 @@ import android.app.Activity;
 import android.app.Service;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.graphics.Rect;
 import android.os.Vibrator;
-import android.text.TextUtils;
 import android.util.AttributeSet;
-import android.util.DisplayMetrics;
 import android.util.Log;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.ViewTreeObserver;
 import android.widget.FrameLayout;
 
-import com.digitalplant.barcode_scanner.BarcodeScannerPlugin;
 import com.digitalplant.barcode_scanner.R;
 import com.digitalplant.barcode_scanner.util.JobManager;
+import com.digitalplant.common.DataCaptureManager;
+import com.scandit.datacapture.barcode.capture.BarcodeCapture;
+import com.scandit.datacapture.barcode.capture.BarcodeCaptureListener;
+import com.scandit.datacapture.barcode.capture.BarcodeCaptureSession;
+import com.scandit.datacapture.barcode.capture.BarcodeCaptureSettings;
+import com.scandit.datacapture.barcode.data.Barcode;
+import com.scandit.datacapture.core.capture.DataCaptureContext;
+import com.scandit.datacapture.core.common.feedback.Feedback;
+import com.scandit.datacapture.core.data.FrameData;
+import com.scandit.datacapture.core.source.Camera;
+import com.scandit.datacapture.core.source.CameraSettings;
+import com.scandit.datacapture.core.source.FrameSourceState;
+import com.scandit.datacapture.core.source.TorchState;
+import com.scandit.datacapture.core.ui.DataCaptureView;
 
-import com.huawei.hms.hmsscankit.OnResultCallback;
-import com.huawei.hms.hmsscankit.RemoteView;
-import com.huawei.hms.ml.scan.HmsScan;
-
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 
 import androidx.annotation.NonNull;
 import androidx.constraintlayout.widget.ConstraintLayout;
-
 import io.flutter.app.FlutterApplication;
 import io.flutter.plugin.common.MethodChannel;
 
-public class EmbeddedScanView extends ConstraintLayout implements OnResultCallback {
+public class EmbeddedScanView extends ConstraintLayout implements BarcodeCaptureListener {
     public static final String TAG = EmbeddedScanView.class.getSimpleName();
 
     private Activity activity;
-    private RemoteView remoteView;
     private FrameLayout frameLayout;
     private Vibrator vibrator;
     private MethodChannel channel;
@@ -50,7 +56,10 @@ public class EmbeddedScanView extends ConstraintLayout implements OnResultCallba
     private int maxScan = -1;
     private int delay = 0;
     private int viewId;
-    private ArrayList<Integer> formats;
+
+    private DataCaptureContext dataCaptureContext;
+    private BarcodeCapture barcodeCapture;
+    private Camera camera;
 
     private JobManager jobManager;
 
@@ -86,6 +95,27 @@ public class EmbeddedScanView extends ConstraintLayout implements OnResultCallba
         jobManager = new JobManager(activity);
 
         vibrator = (Vibrator) activity.getApplication().getSystemService(Service.VIBRATOR_SERVICE);
+
+        frameLayout = findViewById(R.id.camera_view_holder);
+
+        dataCaptureContext = DataCaptureManager.dataCaptureContext;
+        BarcodeCaptureSettings settings = new BarcodeCaptureSettings();
+        settings.enableSymbologies(new HashSet<>(Arrays.asList(DataCaptureManager.BarcodeFormats)));
+
+        barcodeCapture = BarcodeCapture.forDataCaptureContext(dataCaptureContext, settings);
+        barcodeCapture.getFeedback().setSuccess(new Feedback(null, null));
+        barcodeCapture.addListener(this);
+
+        CameraSettings cameraSettings = BarcodeCapture.createRecommendedCameraSettings();
+        camera = Camera.getDefaultCamera();
+
+        if (camera != null) {
+            camera.applySettings(cameraSettings);
+            dataCaptureContext.setFrameSource(camera);
+            camera.switchToDesiredState(FrameSourceState.ON);
+        }
+
+        frameLayout.addView(DataCaptureView.newInstance(activity, dataCaptureContext));
     }
 
     public void setViewId(int viewId) {
@@ -97,7 +127,16 @@ public class EmbeddedScanView extends ConstraintLayout implements OnResultCallba
     }
 
     public void setFormats(ArrayList<Integer> formats) {
-        this.formats = formats;
+        BarcodeCaptureSettings settings = new BarcodeCaptureSettings();
+        if (formats == null) {
+            settings.enableSymbologies(new HashSet<>(Arrays.asList(DataCaptureManager.BarcodeFormats)));
+        } else {
+            for (Integer f : formats) {
+                settings.enableSymbology(DataCaptureManager.BarcodeFormats[f], true);
+            }
+        }
+
+        barcodeCapture.applySettings(settings);
     }
 
     public void setDelay(int delay) {
@@ -116,19 +155,9 @@ public class EmbeddedScanView extends ConstraintLayout implements OnResultCallba
     protected void onAttachedToWindow() {
         super.onAttachedToWindow();
 
-        frameLayout = findViewById(R.id.camera_view_holder);
-        ViewTreeObserver observer = frameLayout.getViewTreeObserver();
-        if (observer.isAlive()) {
-            observer.addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
-                @Override
-                public void onGlobalLayout() {
-                    frameLayout.getViewTreeObserver().removeOnGlobalLayoutListener(this);
-
-                    initRemoteView();
-                    remoteView.onCreate(null);
-                    remoteView.onStart();
-                }
-            });
+        barcodeCapture.setEnabled(true);
+        if (camera != null) {
+            camera.switchToDesiredState(FrameSourceState.ON);
         }
     }
 
@@ -137,12 +166,8 @@ public class EmbeddedScanView extends ConstraintLayout implements OnResultCallba
         super.onVisibilityChanged(changedView, visibility);
         Log.d(TAG,"onVisibilityChanged: "+viewId);
 
-        if (remoteView == null) { return; }
-        if (visibility == View.VISIBLE) {
-            remoteView.onResume();
-        } else {
-            remoteView.onPause();
-        }
+        if (barcodeCapture == null) { return; }
+        barcodeCapture.setEnabled(visibility == View.VISIBLE);
     }
 
     @Override
@@ -150,70 +175,42 @@ public class EmbeddedScanView extends ConstraintLayout implements OnResultCallba
         super.onDetachedFromWindow();
 
         Log.d(TAG,"onDetachedFromWindow: "+viewId);
-        if (remoteView != null) {
-            remoteView.onStop();
-            remoteView.onDestroy();
+        if (barcodeCapture != null) {
+            barcodeCapture.removeListener(this);
+            dataCaptureContext.removeMode(barcodeCapture);
+        }
+
+        if (camera != null) {
+            camera.switchToDesiredState(FrameSourceState.OFF);
         }
 
         vibrator.cancel();
     }
 
     /**
-     * 初始化相机，解码器
-     */
-    public void initRemoteView(){
-        DisplayMetrics dm = getResources().getDisplayMetrics();
-        //2. Obtain the screen size.
-        int screenWidth = dm.widthPixels;
-        int screenHeight = dm.heightPixels;
-        int viewHeight = frameLayout.getHeight();
-
-        //3. Calculate the viewfinder's rectangle, which in the middle of the layout.
-        //Set the scanning area. (Optional. Rect can be null. If no settings are specified, it will be located in the middle of the layout.)
-        Rect rect = new Rect(0, (screenHeight-viewHeight)/2, 0, (screenHeight+viewHeight)/2);
-
-        int scanType1 = HmsScan.ALL_SCAN_TYPE;
-        int[] scanTypes = new int[0];
-        if (formats != null && formats.size() > 0) {
-            scanType1 = formats.get(0).intValue();
-
-            scanTypes = new int[formats.size()-1];
-            for (int i=1; i<formats.size(); ++i) {
-                scanTypes[i-1] = formats.get(i).intValue();
-            }
-        }
-
-        //Initialize the RemoteView instance, and set callback for the scanning result.
-        remoteView = new RemoteView.Builder()
-                .setContext(activity)
-                .setBoundingBox(rect)
-                .setFormat(scanType1, scanTypes)
-                .build();
-
-        remoteView.setOnResultCallback(this);
-
-        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(screenWidth, screenHeight);
-        params.gravity = Gravity.CENTER;
-
-        frameLayout.addView(remoteView, params);
-    }
-
-    /**
      * 扫码结果回调
-     * @param result 扫码结果
      */
     @Override
-    public void onResult(HmsScan[] result) {
-        if (result == null || result.length == 0 || result[0] == null || TextUtils.isEmpty(result[0].getOriginalValue())) {
+    public void onBarcodeScanned(@NonNull BarcodeCapture barcodeCapture,
+                                 @NonNull BarcodeCaptureSession session, @NonNull FrameData frameData) {
+        List<Barcode> barcodes = session.getNewlyRecognizedBarcodes();
+        if (barcodes.size() == 0) {
             return;
         }
 
-        channel.invokeMethod("EmbeddedScanner.onCode", result[0].getOriginalValue());
         if (vibrateOn && vibrator.hasVibrator()) {
             vibrator.vibrate(80);
         }
 
-        remoteView.pauseContinuouslyScan();
+        final String result = barcodes.get(0).getData();
+        jobManager.runOnUiThread(new JobManager.Task() {
+            @Override
+            public void run() {
+                channel.invokeMethod("EmbeddedScanner.onCode", result);
+            }
+        });
+
+        barcodeCapture.setEnabled(false);
         if (autoStart) {
             if(--maxScan != 0 ){
                 if (delay <= 0) {
@@ -234,7 +231,12 @@ public class EmbeddedScanView extends ConstraintLayout implements OnResultCallba
             return;
         }
 
-        onFinishCallback();
+        jobManager.runOnUiThread(new JobManager.Task() {
+            @Override
+            public void run() {
+                onFinishCallback();
+            }
+        });
     }
 
     public void onFinishCallback() {
@@ -252,7 +254,10 @@ public class EmbeddedScanView extends ConstraintLayout implements OnResultCallba
         if (hasTorch()) {
             flashOn = !flashOn;
 
-            remoteView.switchLight();
+            if (camera != null) {
+                camera.setDesiredTorchState(flashOn ? TorchState.ON : TorchState.OFF);
+            }
+
             channel.invokeMethod("EmbeddedScanner.onToggleFlash", flashOn);
         }
     }
@@ -281,12 +286,7 @@ public class EmbeddedScanView extends ConstraintLayout implements OnResultCallba
     public void setScanParams(Map<String, Object> params) {
         Log.d(TAG, "setScanParams: "+params.toString());
         if (params.containsKey("formats")) {
-            ArrayList<Integer> fs = (ArrayList<Integer>) params.get("formats");
-            ArrayList<Integer> _formats = new ArrayList<>();
-            for (int f : fs) {
-                _formats.add(BarcodeScannerPlugin.BarcodeFormats[f]);
-            }
-            setFormats(_formats);
+            setFormats((ArrayList<Integer>) params.get("formats"));
         }
 
         if (params.containsKey("maxScan")) {
@@ -304,10 +304,21 @@ public class EmbeddedScanView extends ConstraintLayout implements OnResultCallba
 
     public void setReadyToScan() {
         if (okToStart) {
-            remoteView.resumeContinuouslyScan();
+            barcodeCapture.setEnabled(true);
             okToStart = false;
 
             onReadyCallback();
         }
     }
+
+    @Override
+    public void onObservationStarted(@NotNull BarcodeCapture barcodeCapture) {}
+
+    @Override
+    public void onObservationStopped(@NotNull BarcodeCapture barcodeCapture) {}
+
+    @Override
+    public void onSessionUpdated(@NotNull BarcodeCapture barcodeCapture,
+                                 @NotNull BarcodeCaptureSession barcodeCaptureSession,
+                                 @NotNull FrameData frameData) {}
 }

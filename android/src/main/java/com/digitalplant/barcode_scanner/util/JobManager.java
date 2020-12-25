@@ -26,6 +26,15 @@ public class JobManager {
         }, delay);
     }
 
+    public synchronized void runOnUiThread(final Task task) {
+        activity.runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                task.run();
+            }
+        });
+    }
+
     public interface Task {
         void run();
     }

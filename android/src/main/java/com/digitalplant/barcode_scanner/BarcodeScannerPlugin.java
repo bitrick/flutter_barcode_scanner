@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
-//import androidx.annotation.CheckResult;
 import android.util.Log;
 import android.app.Application;
 import android.app.Application.ActivityLifecycleCallbacks;
@@ -13,8 +12,8 @@ import android.view.inputmethod.InputMethodManager;
 import android.view.View;
 
 import com.digitalplant.barcode_scanner.views.EmbeddedScannerFactory;
+import com.digitalplant.common.DataCaptureManager;
 import com.digitalplant.common.KeyboardListener;
-import com.huawei.hms.ml.scan.HmsScan;
 
 import java.util.Map;
 import java.util.ArrayList;
@@ -41,22 +40,6 @@ public class BarcodeScannerPlugin implements MethodCallHandler, ActivityResultLi
     private static Result pendingResult;
     private static FlutterActivity activity;
     private final Registrar registrar;
-
-    public static int[] BarcodeFormats = {
-            HmsScan.AZTEC_SCAN_TYPE,
-            HmsScan.CODABAR_SCAN_TYPE,
-            HmsScan.CODE39_SCAN_TYPE,
-            HmsScan.CODE93_SCAN_TYPE,
-            HmsScan.CODE128_SCAN_TYPE,
-            HmsScan.DATAMATRIX_SCAN_TYPE,
-            HmsScan.EAN8_SCAN_TYPE,
-            HmsScan.EAN13_SCAN_TYPE,
-            HmsScan.ITF14_SCAN_TYPE,
-            HmsScan.PDF417_SCAN_TYPE,
-            HmsScan.QRCODE_SCAN_TYPE,
-            HmsScan.UPCCODE_A_SCAN_TYPE,
-            HmsScan.UPCCODE_E_SCAN_TYPE,
-    };
 
     private BarcodeScannerPlugin(FlutterActivity activity, final Registrar registrar) {
         BarcodeScannerPlugin.activity = activity;
@@ -115,11 +98,14 @@ public class BarcodeScannerPlugin implements MethodCallHandler, ActivityResultLi
                 pendingResult.success("PREVIOUS_CALL_INTERRUPTED");
             }
             pendingResult = result;
-            if (!(call.arguments instanceof Map)) {
-                throw new IllegalArgumentException("Plugin not passing a map as parameter: " + call.arguments);
-            }
 
             switch (call.method) {
+            case "init":
+                DataCaptureManager.init((String) call.arguments);
+                pendingResult.success(null);
+                pendingResult = null;
+                break;
+
             case "scan":
                 scan(call, result);
                 break;
@@ -148,22 +134,15 @@ public class BarcodeScannerPlugin implements MethodCallHandler, ActivityResultLi
     private void scan(MethodCall call, Result result) {
         Map<String, Object> arguments = (Map <String, Object>) call.arguments;
         ArrayList<Integer> fs = (ArrayList<Integer>) arguments.get("formats");
-        ArrayList<Integer> formats = null;
-        if (fs != null) {
-            formats = new ArrayList<>();
-            for (int f : fs) {
-                formats.add(BarcodeFormats[f]);
-            }
-        }
 
-        Intent intent = new Intent(activity, DefinedActivity.class);
-        intent.putIntegerArrayListExtra(FORMATS_KEY, formats);
+        Intent intent = new Intent(activity, ScanditActivity.class);
+        intent.putIntegerArrayListExtra(FORMATS_KEY, fs);
         activity.startActivityForResult(intent, RC_SCAN);
     }
 
     private boolean scanResult(int resultCode, Intent data) {
-        if (resultCode == DefinedActivity.RESULT_OK) {
-            pendingResult.success(data.getStringExtra(DefinedActivity.SCAN_RESULT));
+        if (resultCode == ScanditActivity.RESULT_OK) {
+            pendingResult.success(data.getStringExtra(ScanditActivity.SCAN_RESULT));
         } else {
             pendingResult.success("");
         }

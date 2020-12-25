@@ -30,8 +30,10 @@
             </intent-filter>
         </activity>
 
-        <activity android:name="com.digitalplant.barcode_scanner.CaptureActivity" />
+        <activity android:name="com.digitalplant.barcode_scanner.ScanditActivity" android:screenOrientation="portrait" />
     </application>
 
     <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.FLASHLIGHT" />
+    <uses-permission android:name="android.permission.VIBRATE" />
 </manifest>
