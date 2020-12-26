@@ -139,7 +139,10 @@ public class BarcodeScannerPlugin implements MethodCallHandler, ActivityResultLi
 
     @Override
     public boolean onActivityResult(int requestCode, int resultCode, Intent data) {
-        return scanResult(resultCode, data);
+        if (requestCode == RC_SCAN) {
+            return scanResult(resultCode, data);
+        }
+        return false;
     }
 
     private void scan(MethodCall call, Result result) {
