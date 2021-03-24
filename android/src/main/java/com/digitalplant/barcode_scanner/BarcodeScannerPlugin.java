@@ -1,8 +1,10 @@
 package com.digitalplant.barcode_scanner;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
 //import androidx.annotation.CheckResult;
 import android.util.Log;
@@ -15,6 +17,7 @@ import android.view.View;
 import com.digitalplant.barcode_scanner.views.EmbeddedScannerFactory;
 import com.digitalplant.common.KeyboardListener;
 
+import java.util.EventListener;
 import java.util.Map;
 import java.util.ArrayList;
 
@@ -54,6 +57,8 @@ public class BarcodeScannerPlugin implements MethodCallHandler, ActivityResultLi
     private final Registrar registrar;
     private static EventChannel.EventSink barcodeStream;
 
+    private static BarcodeReceiver barcodeReceiver;
+
     private BarcodeScannerPlugin(FlutterActivity activity, final Registrar registrar) {
         BarcodeScannerPlugin.activity = activity;
         this.registrar = registrar;
@@ -76,16 +81,14 @@ public class BarcodeScannerPlugin implements MethodCallHandler, ActivityResultLi
                     public void onActivityPaused(Activity activity) {}
 
                     @Override
-                    public void onActivitySaveInstanceState(Activity activity, Bundle outState) {
-                        if (activity == registrar.activity()) {
-                            // TODO
-                        }
-                    }
+                    public void onActivitySaveInstanceState(Activity activity, Bundle outState) {}
 
                     @Override
                     public void onActivityDestroyed(Activity activity) {
                         if (activity == registrar.activity()) {
                             ((Application) registrar.context()).unregisterActivityLifecycleCallbacks(this);
+
+                            barcodeReceiver.unregister();
                         }
                     }
 
@@ -114,6 +117,12 @@ public class BarcodeScannerPlugin implements MethodCallHandler, ActivityResultLi
         eventChannel.setStreamHandler(instance);
 
         registrar.platformViewRegistry().registerViewFactory("embedded_scanner", new EmbeddedScannerFactory(registrar));
+
+        barcodeReceiver = new BarcodeReceiver();
+        barcodeReceiver.register(activity);
+
+        final EventChannel barcodeBroadcast = new EventChannel(registrar.messenger(), "barcode_broadcast");
+        barcodeBroadcast.setStreamHandler(barcodeReceiver);
     }
 
     @Override
@@ -251,115 +260,38 @@ public class BarcodeScannerPlugin implements MethodCallHandler, ActivityResultLi
 /**
  * 部分代码来源于 https://www.jianshu.com/p/5c1bf3e968e6
  */
-class BarcodeListener implements KeyboardListener.Callback {
-    private StringBuilder result;
-    private boolean capsOn = false;
+class BarcodeReceiver extends BroadcastReceiver implements StreamHandler {
+    private static final String TAG = BarcodeReceiver.class.getSimpleName();
+    private ArrayList<EventChannel.EventSink> streams = new ArrayList<>();
+    private Activity activity;
 
-    BarcodeListener() {
-        result = new StringBuilder();
+    public void register(Activity activity) {
+        this.activity = activity;
+
+        IntentFilter filter = new IntentFilter();
+        filter.addAction("com.android.server.scannerservice.broadcast");
+        activity.registerReceiver(this, filter);
+    }
+
+    public void unregister() {
+        activity.unregisterReceiver(this);
     }
 
     @Override
-    public boolean run(KeyEvent e) {
-        String deviceName = BarcodeScannerPlugin.deviceName;
-        if (!(deviceName.isEmpty() || deviceName.equals(e.getDevice().getName()))) {
-            return false;
-        }
-
-        int keyCode = e.getKeyCode();
-        switch (keyCode) {
-        case KeyEvent.KEYCODE_SHIFT_RIGHT:
-        case KeyEvent.KEYCODE_SHIFT_LEFT:
-            capsOn = e.getAction() == KeyEvent.ACTION_DOWN;
-            break;
-
-        case KeyEvent.KEYCODE_ENTER:
-            if (e.getAction() == KeyEvent.ACTION_DOWN) {
-                BarcodeScannerPlugin.onBarcodeScanReceiver(result.toString());
-                result.delete(0, result.length());
-            }
-            break;
-
-        default:
-            if (e.getAction() == KeyEvent.ACTION_DOWN) {
-                char aChar = getInputCode(capsOn, keyCode);
-                if (aChar != 0) {
-                    result.append(aChar);
-                }
-            }
-            break;
-        }
-        return false;
-    }
-
-    /**
-     * 将keyCode转为char
-     *
-     * @param caps    是不是大写
-     * @param keyCode 按键
-     * @return 按键对应的char
-     */
-    private char getInputCode(boolean caps, int keyCode) {
-        if (keyCode >= KeyEvent.KEYCODE_A && keyCode <= KeyEvent.KEYCODE_Z) {
-            return (char) ((caps ? 'A' : 'a') + keyCode - KeyEvent.KEYCODE_A);
-        } else {
-            return keyValue(caps, keyCode);
+    public void onReceive(Context context, Intent intent) {
+        String result = intent.getStringExtra("scannerdata");
+        for (EventChannel.EventSink s : streams) {
+            s.success(result);
         }
     }
 
-    /**
-     * 按键对应的char表
-     */
-    private char keyValue(boolean caps, int keyCode) {
-        switch (keyCode) {
-            case KeyEvent.KEYCODE_0:
-                return caps ? ')' : '0';
-            case KeyEvent.KEYCODE_1:
-                return caps ? '!' : '1';
-            case KeyEvent.KEYCODE_2:
-                return caps ? '@' : '2';
-            case KeyEvent.KEYCODE_3:
-                return caps ? '#' : '3';
-            case KeyEvent.KEYCODE_4:
-                return caps ? '$' : '4';
-            case KeyEvent.KEYCODE_5:
-                return caps ? '%' : '5';
-            case KeyEvent.KEYCODE_6:
-                return caps ? '^' : '6';
-            case KeyEvent.KEYCODE_7:
-                return caps ? '&' : '7';
-            case KeyEvent.KEYCODE_8:
-                return caps ? '*' : '8';
-            case KeyEvent.KEYCODE_9:
-                return caps ? '(' : '9';
-            case KeyEvent.KEYCODE_NUMPAD_SUBTRACT:
-                return '-';
-            case KeyEvent.KEYCODE_MINUS:
-                return '_';
-            case KeyEvent.KEYCODE_EQUALS:
-                return '=';
-            case KeyEvent.KEYCODE_NUMPAD_ADD:
-                return '+';
-            case KeyEvent.KEYCODE_GRAVE:
-                return caps ? '~' : '`';
-            case KeyEvent.KEYCODE_BACKSLASH:
-                return caps ? '|' : '\\';
-            case KeyEvent.KEYCODE_LEFT_BRACKET:
-                return caps ? '{' : '[';
-            case KeyEvent.KEYCODE_RIGHT_BRACKET:
-                return caps ? '}' : ']';
-            case KeyEvent.KEYCODE_SEMICOLON:
-                return caps ? ':' : ';';
-            case KeyEvent.KEYCODE_APOSTROPHE:
-                return caps ? '"' : '\'';
-            case KeyEvent.KEYCODE_COMMA:
-                return caps ? '<' : ',';
-            case KeyEvent.KEYCODE_PERIOD:
-                return caps ? '>' : '.';
-            case KeyEvent.KEYCODE_SLASH:
-                return caps ? '?' : '/';
-            default:
-                return 0;
-        }
+    @Override
+    public void onListen(Object o, EventChannel.EventSink eventSink) {
+        streams.add(eventSink);
+    }
+
+    @Override
+    public void onCancel(Object o) {
+        streams.remove(o);
     }
 }

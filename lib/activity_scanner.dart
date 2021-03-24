@@ -9,6 +9,9 @@ class BarcodeScanner {
   static const EventChannel _eventChannel =
       const EventChannel('barcode_scanner_receiver');
 
+  static const EventChannel _barcodeBroadcast =
+      const EventChannel('barcode_broadcast');
+
   static Future<String> scan({List<int> formats}) async {
     Map params = <String, dynamic>{};
     if (formats != null) {
@@ -40,4 +43,25 @@ class BarcodeScanner {
   static Future<String> immRestartInput() async {
     return _channel.invokeMethod('immRestartInput', {});
   }
+
+  static List<_FSPair> receivers = [];
+  static onBroadcast(Function(dynamic) fn) {
+    var stream = _barcodeBroadcast.receiveBroadcastStream();
+    receivers.add(_FSPair(fn, stream.listen(fn)));
+  }
+
+  static unBroadcast(Function(dynamic) fn) {
+    for (var i=0; i<receivers.length; ++i) {
+      if (receivers[i].fn == fn) {
+        receivers[i--].receiver.cancel();
+      }
+    }
+  }
+}
+
+class _FSPair {
+  Function(dynamic) fn;
+  StreamSubscription receiver;
+
+  _FSPair(this.fn, this.receiver);
 }

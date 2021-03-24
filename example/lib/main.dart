@@ -64,19 +64,15 @@ class _MyAppState extends State<MyApp> {
                   ),
 
                   RaisedButton(
-                    child: Text("连续扫描"),
+                    child: Text("监听广播"),
                     onPressed: () async {
-                      codes = [];
-                      var receiver = BarcodeScanner.scanMulti(formats: [BarcodeFormat.CODE_128], maxScan: -1, delay: 100);
-                      receiver.listen((result){
-                        if (codes.contains(result)) {
-                          return;
-                        }
-                        codes.add(result);
-                      }, onDone: () {
-                        print("done");
-                        setState(() {
-                        });
+                      var fn = (code) {
+                        print(code);
+                      };
+
+                      BarcodeScanner.onBroadcast(fn);
+                      Future.delayed(Duration(seconds: 10)).then((_) {
+                        BarcodeScanner.unBroadcast(fn);
                       });
                     },
                   ),
