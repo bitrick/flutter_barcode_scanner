@@ -18,7 +18,7 @@ import com.digitalplant.common.KeyboardListener;
 import java.util.Map;
 import java.util.ArrayList;
 
-import io.flutter.embedding.android.FlutterActivity;
+import io.flutter.app.FlutterActivity;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
